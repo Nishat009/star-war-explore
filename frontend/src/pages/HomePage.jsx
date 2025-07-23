@@ -1,71 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import debounce from 'lodash.debounce';
+import SearchInput from '../components/SearchInput';
+import CharacterList from '../components/CharacterList';
 
-function SearchInput({ initialValue = '', onSearch }) {
-  const [value, setValue] = useState(initialValue);
-
-  useEffect(() => {
-    setValue(initialValue);
-  }, [initialValue]);
-
-  const debouncedSearch = useMemo(
-    () =>
-      debounce((val) => {
-        onSearch(val.trim());
-      }, 400),
-    [onSearch]
-  );
-
-  const handleChange = (e) => {
-    const val = e.target.value;
-    setValue(val);
-    debouncedSearch(val);
-  };
-
-  const handleClear = () => {
-    setValue('');
-    onSearch('');
-  };
-
-  return (
-    <div className="mb-4 flex gap-2">
-      <input
-        type="text"
-        placeholder="Search by name..."
-        value={value}
-        onChange={handleChange}
-        className="border px-3 py-2 rounded flex-1"
-      />
-      {value && (
-        <button
-          onClick={handleClear}
-          className="bg-gray-400 text-white px-4 py-2 rounded"
-          type="button"
-        >
-          Clear
-        </button>
-      )}
-    </div>
-  );
-}
-
-function CharacterList({ characters }) {
-  if (!characters || characters.length === 0)
-    return <p className="text-gray-500">No characters found.</p>;
-
-  return (
-    <ul className="list-disc pl-5">
-      {characters.map((char, index) => (
-        <li key={char.uid || char.url || index}>
-          <a href={`/characters/${char.uid || index}`} className="text-blue-500 hover:underline">
-            {char.name}
-          </a>
-        </li>
-      ))}
-    </ul>
-  );
-}
 
 export default function HomePage() {
   const [characters, setCharacters] = useState([]);
@@ -85,32 +22,34 @@ export default function HomePage() {
   }, [query]);
 
   useEffect(() => {
-    async function fetchCharacters() {
-      setLoading(true);
-      setError(null);
+  async function fetchCharacters() {
+    setLoading(true);
+    setError(null);
 
-      try {
-        const baseUrl = `http://localhost:5000/api/characters`;
-        const url = query
-          ? `${baseUrl}?search=${encodeURIComponent(query)}`
-          : `${baseUrl}?page=${page}`;
+    try {
+      const baseUrl = `http://localhost:5000/api/characters`;
+      const url = query
+        ? `${baseUrl}?search=${encodeURIComponent(query)}`
+        : `${baseUrl}?page=${page}`;
 
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
-        const fetchedData = await response.json();
-
-        setData(fetchedData);
-        setCharacters(fetchedData.results || []);
-      } catch (err) {
-        setError(`Failed to load characters: ${err.message}`);
-      } finally {
-        setLoading(false);
-      }
+      const fetchedData = await response.json();
+      setData(fetchedData);
+      setCharacters(fetchedData.characters || []); // ✅ fixed
+    } catch (err) {
+      setError(`Failed to load characters: ${err.message}`);
+    } finally {
+      setLoading(false);
     }
+  }
 
-    fetchCharacters();
-  }, [page, query]);
+  fetchCharacters();
+}, [page, query]);
+
+
+
 
   const onSearch = (searchValue) => {
     if (searchValue) {
@@ -123,69 +62,67 @@ export default function HomePage() {
   };
 
   const handlePrevious = () => {
-    if (data?.previous) {
-      const params = { page: data.previous };
-      if (query) params.search = query;
-      setSearchParams(params);
-    }
-  };
+  if (page > 1) {
+    const params = { page: (page - 1).toString() };
+    if (query) params.search = query;
+    setSearchParams(params);
+  }
+};
 
-  const handleNext = () => {
-    if (data?.next) {
-      const params = { page: data.next };
-      if (query) params.search = query;
-      setSearchParams(params);
-    }
-  };
+const handleNext = () => {
+  if (data?.totalPages && page < data.totalPages) {
+    const params = { page: (page + 1).toString() };
+    if (query) params.search = query;
+    setSearchParams(params);
+  }
+};
+
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-4">Characters</h1>
+    <div className="min-h-screen bg-gray-900 text-white p-6">
 
-      <SearchInput initialValue={searchTerm} onSearch={onSearch} />
-
-      {error && <p className="text-red-500 mb-2">{error}</p>}
-
-      {loading && characters.length > 0 && (
-        <p className="text-gray-500 mb-2 italic">Loading...</p>
-      )}
-
-      {!loading && characters.length === 0 && (
-        <p className="text-gray-500 mb-2">No characters found.</p>
-      )}
-
-      <CharacterList characters={characters} />
-
-      {!query && (
-        <div className="mt-4 flex gap-2">
-          <button
-            onClick={handlePrevious}
-            className="px-4 py-2 bg-gray-600 text-white rounded disabled:opacity-50"
-            disabled={!data?.previous || loading}
-          >
-            Previous Page
-          </button>
-          <button
-            onClick={handleNext}
-            className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
-            disabled={!data?.next || loading}
-          >
-            Next Page
-          </button>
-        </div>
-      )}
-
-      {!query && data && (
-        <p className="mt-2 text-sm text-gray-600">
-          Page {page} of {data.total_pages || '?'}
-        </p>
-      )}
-
-      {query && (
-        <p className="mt-2 text-sm text-gray-600">
-          Showing {characters.length} result(s) for: "<strong>{query}</strong>"
-        </p>
-      )}
+      <div className="max-w-5xl mx-auto">
+        <h1 className='text-5xl md:text-7xl font-bold bg-gradient-primary mb-6 flex justify-center text-center font-inter tracking-tight bg-gradient-to-r mx-auto from-violet-500 to-fuchsia-500 text-transparent bg-clip-text '>Star Wars Explorer</h1>
+        <div className="h-1 w-32 bg-linear-to-bl from-violet-500 to-fuchsia-500 rounded-full mx-auto mb-6 "></div>
+        <h3 className='text-xl md:text-2xl text-stone-400 max-w-3xl mx-auto text-center font-light mb-10'>Track the Force across planets, species, and starship. Uncover characters, planets, starships, and more from a galaxy far, far away...</h3>
+        <SearchInput initialValue={searchTerm} onSearch={onSearch} />
+        {error && <p className="text-red-400 text-lg mb-4">{error}</p>}
+        {loading && characters.length > 0 && (
+          <p className="text-gray-400 text-lg mb-4 italic">Loading...</p>
+        )}
+        {!loading && characters.length === 0 && (
+          <p className="text-gray-400 text-lg mb-4">No characters found.</p>
+        )}
+       <CharacterList characters={characters} />
+        {!query && (
+          <div className="mt-6 flex gap-3">
+            <button
+              onClick={handlePrevious}
+              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 transition duration-200"
+              disabled={!data?.previous || loading}
+            >
+              Previous
+            </button>
+            <button
+              onClick={handleNext}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition duration-200"
+              disabled={!data?.next || loading}
+            >
+              Next
+            </button>
+          </div>
+        )}
+        {!query && data && (
+          <p className="mt-4 text-gray-400 text-sm">
+            Page {page} of {data.total_pages || '?'}
+          </p>
+        )}
+        {query && (
+          <p className="mt-4 text-gray-400 text-sm">
+            Showing {characters.length} result(s) for: "<strong>{query}</strong>"
+          </p>
+        )}
+      </div>
     </div>
   );
 }
