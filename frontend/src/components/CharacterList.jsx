@@ -1,3 +1,5 @@
+import { Film, Globe, User, Users } from "lucide-react";
+
 export default function CharacterList({ characters, loading }) {
   if (loading) {
     return (
@@ -18,18 +20,47 @@ export default function CharacterList({ characters, loading }) {
       {characters.map((char, index) => (
         <li
           key={char.uid || index}
-          className="p-4 rounded-lg bg-gray-800 hover:bg-gray-700 transition duration-200"
+          className="bg-slate-800/40 backdrop-blur-sm border border-slate-700 rounded-xl p-6 cursor-pointer transform transition-all duration-300 hover:scale-105 hover:bg-slate-800/60 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/20"
         >
-          <h2 className="text-xl font-bold mb-2">{char.name}</h2>
-          <p><strong>Height:</strong> {char.height}</p>
-          <p><strong>Mass:</strong> {char.mass}</p>
-          <p><strong>Homeworld:</strong> {char.homeworld}</p>
-          <p><strong>Species:</strong> {char.species}</p>
-          <p><strong>Films:</strong> {char.films?.length > 0 ? (
-            <ul className="list-disc list-inside">
-              {char.films.map((film, i) => <li key={i}>{film}</li>)}
-            </ul>
-          ) : 'None'}</p>
+          <h2 className="text-2xl font-bold text-white mb-2">{char.name}</h2>
+          <div className="w-full h-0.5 bg-gradient-to-r from-purple-500 to-transparent mb-4"></div>
+          <div className="space-y-3">
+            <div className="flex items-center text-gray-300">
+              <User className="w-4 h-4 mr-3 text-purple-400" />
+              <span className="text-md">
+                <span className="font-medium">Height:</span> {char.height}
+              </span>
+            </div>
+            <div className="flex items-center text-gray-300">
+              <User className="w-4 h-4 mr-3 text-purple-400" />
+              <span className="text-md">
+                <span className="font-medium">Mass:</span> {char.mass}
+              </span>
+            </div>
+            <div className="flex items-center text-gray-300">
+              <Globe className="w-4 h-4 mr-3 text-purple-400" />
+              <span className="text-md">
+                <span className="font-medium">Homeworld:</span> {char.homeworld}
+              </span>
+            </div>
+            <div className="flex items-center text-gray-300">
+              <Users className="w-4 h-4 mr-3 text-purple-400" />
+              <span className="text-md">
+                <span className="font-medium">Species:</span> {char.species}
+              </span>
+            </div>
+            <div className="mt-4 pt-4 border-t border-slate-700">
+              <div className="flex items-start text-gray-300">
+                <Film className="w-4 h-4 mr-3 text-purple-400 mt-1.5" />
+                <div>
+                  <span className="text-md font-medium">Films:</span>
+                  <ul className="mt-1 space-y-1">
+                    {char.films.map((film, i) => <li className="text-sm text-gray-400" key={i}>{film}</li>)}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
         </li>
       ))}
     </ul>
